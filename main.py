@@ -17,11 +17,16 @@ assert LINE.count(".") == 1 and LINE.endswith("."), "line must be a single sente
 
 
 def main() -> None:
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    # An empty MAKEFUN_OUTPUT_DIR (exported but blank) must not break the
+    # run: fall back to the harness default /output, as the grader provides.
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "entry.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(LINE)
+    # Deterministic permissions for the grader: the entry must be readable
+    # (0644) no matter what umask the sandbox runs with.
+    os.chmod(path, 0o644)
     # Read-back check (thinking_revised): the file on disk must hold exactly
     # the approved line, byte for byte; otherwise fail loudly, never silently.
     with open(path, "r", encoding="utf-8", newline="\n") as f:
